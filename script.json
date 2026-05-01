@@ -1,0 +1,101 @@
+const CORS_PROXY = "https://corsproxy.io/?";
+
+async function fetchWithProxy(url) {
+  try {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    if (!response.ok) throw new Error("Blocked");
+    return await response.json();
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+async function loadProfile() {
+  let username = document.getElementById('username').value.trim().toLowerCase();
+  if (!username) return alert("Please enter a username");
+
+  document.getElementById('error').classList.add('hidden');
+  const profileDiv = document.getElementById('profile');
+  profileDiv.classList.add('hidden');
+
+  const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`;
+  const data = await fetchWithProxy(url);
+
+  if (!data?.data?.user) {
+    document.getElementById('error').innerHTML = `
+      Could not load profile.<br>
+      Instagram may be blocking the request or the account is private.<br>
+      Try again in a few minutes.
+    `;
+    document.getElementById('error').classList.remove('hidden');
+    return;
+  }
+
+  const user = data.data.user;
+
+  let postsHTML = '';
+  if (user.edge_owner_to_timeline_media?.edges?.length) {
+    postsHTML = user.edge_owner_to_timeline_media.edges.slice(0, 12).map(edge => {
+      const node = edge.node;
+      const img = node.thumbnail_src || node.display_url;
+      return `
+        <div onclick="enlarge('${img}')" class="cursor-pointer overflow-hidden rounded-2xl">
+          <img src="${img}" class="w-full aspect-square object-cover hover:scale-110 transition">
+        </div>`;
+    }).join('');
+  } else {
+    postsHTML = '<p class="col-span-3 text-gray-400 text-center py-8">No public posts found</p>';
+  }
+
+  profileDiv.innerHTML = `
+    <div class="flex flex-col md:flex-row gap-10 items-center md:items-start">
+      <div onclick="enlarge('${user.profile_pic_url_hd || user.profile_pic_url}')" class="cursor-pointer shrink-0">
+        <img src="${user.profile_pic_url_hd || user.profile_pic_url}" 
+             class="w-56 h-56 rounded-full object-cover border-4 border-pink-500 story-ring shadow-xl">
+      </div>
+      
+      <div class="flex-1 text-center md:text-left">
+        <h2 class="text-4xl font-bold">${user.full_name} 
+          <span class="text-gray-400 text-2xl">@${user.username}</span>
+        </h2>
+        ${user.is_verified ? '<span class="inline-block mt-2 bg-blue-600 text-white px-5 py-1 rounded-full text-sm">Verified</span>' : ''}
+        
+        <p class="mt-6 text-lg leading-relaxed text-gray-300">${user.biography ? user.biography.replace(/\n/g, '<br>') : 'No bio'}</p>
+        
+        <div class="flex justify-center md:justify-start gap-8 mt-8 text-xl">
+          <div><span class="font-bold">${(user.edge_followed_by?.count || 0).toLocaleString()}</span><br><span class="text-sm text-gray-400">Followers</span></div>
+          <div><span class="font-bold">${(user.edge_follow?.count || 0).toLocaleString()}</span><br><span class="text-sm text-gray-400">Following</span></div>
+          <div><span class="font-bold">${(user.edge_owner_to_timeline_media?.count || 0).toLocaleString()}</span><br><span class="text-sm text-gray-400">Posts</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="text-3xl font-semibold mt-16 mb-8">Recent Posts</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      ${postsHTML}
+    </div>
+
+    <div class="mt-16 text-center text-gray-500 text-sm">
+      Stories & recent follows not available in this static version.<br>
+      For full anonymous stories, try <a href="https://www.dolphinradar.com" target="_blank" class="underline hover:text-pink-400">DolphinRadar</a>
+    </div>
+  `;
+
+  profileDiv.classList.remove('hidden');
+}
+
+function enlarge(src) {
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-img').src = src;
+  modal.style.display = 'flex';
+}
+
+// Press Enter to search
+document.getElementById('username').addEventListener('keypress', e => {
+  if (e.key === 'Enter') loadProfile();
+});

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-950 text-white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstaAnon - Browse Public IG Profiles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .story-ring { border: 3px solid #f472b6; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 50; }
+  </style>
+</head>
+<body class="min-h-screen p-4">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold text-center mb-8 flex items-center justify-center gap-3">
+      <i class="fa-brands fa-instagram text-pink-500"></i> InstaAnon Viewer
+    </h1>
+
+    <div class="flex gap-3 mb-8">
+      <input id="username" type="text" placeholder="Enter username (e.g. natgeo)" 
+             class="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-5 py-4 text-lg focus:outline-none focus:border-pink-500">
+      <button onclick="loadProfile()" 
+              class="bg-gradient-to-r from-pink-500 to-purple-600 px-8 rounded-xl font-semibold hover:scale-105 transition">
+        Search
+      </button>
+    </div>
+
+    <div id="profile" class="hidden bg-gray-900 rounded-3xl p-8">
+      <!-- Filled by JS -->
+    </div>
+
+    <div id="error" class="hidden text-red-400 text-center"></div>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="modal" class="modal" onclick="if(event.target===this) this.style.display='none'">
+    <img id="modal-img" class="max-h-[90vh] max-w-[90vw] rounded-2xl" onclick="event.stopImmediatePropagation()">
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
